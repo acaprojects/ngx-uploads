@@ -15,6 +15,7 @@
   },
   "peerDependencies": {
     "@angular/common": "^8.0.0",
-    "@angular/core": "^8.0.0"
+    "@angular/core": "^8.0.0",
+    "ts-md5": "^1.2.4"
   }
 }
