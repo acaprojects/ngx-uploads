@@ -8,12 +8,9 @@ const dayjs = dayjs_api;
 
 
 @NgModule({
-    declarations: [
-    ],
+    declarations: [],
     imports: [CommonModule],
-    exports: [
-
-    ]
+    exports: []
 })
 export class LibraryModule {
     public static version = 'local-dev';

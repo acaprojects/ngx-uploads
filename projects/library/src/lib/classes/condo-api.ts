@@ -1,16 +1,33 @@
-
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+
 import { Observable } from 'rxjs';
+import { map, share } from 'rxjs/operators';
 
 import { Upload } from './upload';
 
-
+// @dynamic
 export class CondoApi {
 
-    public static hexToBin(input: string) {
-        let result: string = '';
+    public static set token(token: string) {
+        CondoApi._token = token;
+    }
 
-        if ((input.length % 2) > 0) {
+    constructor(private _http: HttpClient, private _apiEndpoint: string, private _upload: Upload) {
+        // Clone the upload params
+        this._params = { ...this._upload.metadata };
+    }
+
+    private static _token = '';
+
+    public uploadId: string;
+
+    private _params: any;
+    private _uploadId: string;
+    private _currentRequests = new Set<any>();
+    public static hexToBin(input: string) {
+        let result = '';
+
+        if (input.length % 2 > 0) {
             input = '0' + input;
         }
 
@@ -21,28 +38,10 @@ export class CondoApi {
         return result;
     }
 
-    public static set token(token: string) {
-        CondoApi._token = token;
-    }
-
-    private static _token: string = '';
-
-    public uploadId: string;
-
-    private _params: any;
-    private _uploadId: string;
-    private _currentRequests = new Set<any>();
-
-
-    constructor(private _http: HttpClient, private _apiEndpoint: string, private _upload: Upload) {
-        // Clone the upload params
-        this._params = Object.assign({}, this._upload.metadata);
-    }
-
     public init() {
         const file = this._upload.file;
         let headers = new HttpHeaders();
-        let search = new HttpParams();
+        const search = new HttpParams();
         let req: any;
 
         headers = headers.append('Accept', 'application/json');
@@ -70,20 +69,20 @@ export class CondoApi {
         this._setParams(search, this._params);
 
         // Return the name of the storage provider (google, amazon, rackspace, etc)
-        req = this._http.get(`${this._apiEndpoint}/new`, {
-            params: search,
-            headers,
-        }).map((res) => {
-            // Make sure the API service is running
-            // console.log(res.text());
-            return res.json().residence;
-        }).share();
+        req = this._http
+            .get(`${this._apiEndpoint}/new`, {
+                params: search,
+                headers
+            })
+            .pipe(
+                map((res: any) => res.residence),
+                share()
+            );
 
         this._monitorRequest(this, req);
 
         return req;
     }
-
 
     // Create a new upload
     public create(options: any = {}) {
@@ -107,22 +106,22 @@ export class CondoApi {
             this._params.parameters = options.parameters;
         }
 
-        req = this._http.post(this._apiEndpoint, JSON.stringify(this._params), {
-            headers,
-        }).map((res) => {
-            const result = res.json();
-
-            // Extract the upload id from the results
-            this._uploadId = result.upload_id;
-
-            return result;
-        }).share();
+        req = this._http
+            .post(this._apiEndpoint, JSON.stringify(this._params), {
+                headers
+            })
+            .pipe(
+                map((res: any) => {
+                    this._uploadId = res.upload_id;
+                    return res;
+                }),
+                share()
+            );
 
         this._monitorRequest(this, req);
 
         return req;
     }
-
 
     // This requests a chunk signature
     //    Only used for resumable / parallel uploads
@@ -130,7 +129,7 @@ export class CondoApi {
         let search = new HttpParams();
         let headers = new HttpHeaders();
         const body: any = {
-            part_list: parts,
+            part_list: parts
         };
         let req: any;
 
@@ -146,22 +145,20 @@ export class CondoApi {
 
         search = this._setParams(search, {
             part: partNum,
-            file_id: partId,
+            file_id: partId
         });
 
-        req = this._http.put(`${this._apiEndpoint}/${encodeURIComponent(this._uploadId)}`,
-            JSON.stringify(body),
-            {
+        req = this._http
+            .put(`${this._apiEndpoint}/${encodeURIComponent(this._uploadId)}`, JSON.stringify(body), {
                 params: search,
-                headers,
-            },
-        ).map(res => res.json()).share();
+                headers
+            })
+            .pipe(share());
 
         this._monitorRequest(this, req);
 
         return req;
     }
-
 
     // provides a query request for some providers if required
     public sign(part_number: any, part_id: string = null) {
@@ -179,15 +176,16 @@ export class CondoApi {
             search = search.set('file_id', encodeURIComponent(part_id));
         }
 
-        req = this._http.get(`${this._apiEndpoint}/${encodeURIComponent(this._uploadId)}/edit`, {
-            params: search,
-        }).map((res) => res.json()).share();
+        req = this._http
+            .get(`${this._apiEndpoint}/${encodeURIComponent(this._uploadId)}/edit`, {
+                params: search
+            })
+            .pipe(share());
 
         this._monitorRequest(this, req);
 
         return req;
     }
-
 
     // Either updates the status of an upload (which parts are complete)
     // Or is used to indicate that an upload is complete
@@ -201,33 +199,25 @@ export class CondoApi {
             headers = headers.append('Authorization', `Bearer ${CondoApi._token}`);
         }
 
-        req = this._http.put(`${this._apiEndpoint}/${encodeURIComponent(this._uploadId)}`, JSON.stringify(params), {
-            headers,
-        }).map((res) => {
-            // NOTE:: This used to check content length however
-            // See: https://github.com/angular/angular/pull/7250
-            try {
-                return res.json();
-            } catch (e) {
-                return null;
-            }
-        }).share();
+        req = this._http
+            .put(`${this._apiEndpoint}/${encodeURIComponent(this._uploadId)}`, JSON.stringify(params), {
+                headers
+            })
+            .pipe(share());
 
         this._monitorRequest(this, req);
 
         return req;
     }
 
-
     // Abort any existing requests
     public abort() {
-        this._currentRequests.forEach((req) => {
+        this._currentRequests.forEach(req => {
             req.dispose();
         });
 
         this._currentRequests.clear();
     }
-
 
     // Destroy an upload
     public destroy() {
@@ -242,13 +232,12 @@ export class CondoApi {
         }
     }
 
-
     // Executes the signed request against the cloud provider
     // Not very testable however it's the best we can achieve given the tools
     public signedRequest(opts: any, monitor: boolean = false) {
         const response: any = {};
         let promise: any;
-        let  dispose: () => void;
+        let dispose: () => void;
 
         promise = new Promise((resolve, reject) => {
             let i: string;
@@ -256,7 +245,7 @@ export class CondoApi {
             let observable: any;
 
             if (monitor) {
-                response.progress = new Observable<{ loaded: number, total: number }>((obs) => {
+                response.progress = new Observable<{ loaded: number; total: number }>(obs => {
                     observable = obs;
                 });
             }
@@ -267,7 +256,7 @@ export class CondoApi {
                 if (evt.lengthComputable && observable) {
                     observable.next({
                         loaded: evt.loaded,
-                        total: evt.total,
+                        total: evt.total
                     });
                 }
             });
@@ -276,18 +265,17 @@ export class CondoApi {
                 this._currentRequests.delete(promise);
 
                 // We are looking for a success response unless there is an expected response
-                if ((xhr.status >= 200 && xhr.status < 300) ||
-                    (xhr.status === opts.expected)) {
+                if ((xhr.status >= 200 && xhr.status < 300) || xhr.status === opts.expected) {
                     resolve(xhr);
                 } else {
                     reject(`${xhr.status}: ${xhr.statusText}`);
                 }
             });
-            xhr.addEventListener('error', (evt) => {
+            xhr.addEventListener('error', evt => {
                 this._currentRequests.delete(promise);
                 reject(`${xhr.status}: ${xhr.statusText || 'unknown error'}`);
             });
-            xhr.addEventListener('abort', (evt) => {
+            xhr.addEventListener('abort', evt => {
                 this._currentRequests.delete(promise);
                 reject(xhr.statusText || 'browser aborted');
             });
@@ -295,7 +283,7 @@ export class CondoApi {
             xhr.open(
                 opts.signature.verb,
                 opts.signature.url,
-                true, // async
+                true // async
             );
 
             // Set the headers
@@ -322,7 +310,6 @@ export class CondoApi {
         response.request = promise;
         return response;
     }
-
 
     private _monitorRequest(self: any, req: any) {
         this._currentRequests.add(req);

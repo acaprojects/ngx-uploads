@@ -4,7 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { CloudStorage } from './cloud-storage';
 import { CondoApi } from './condo-api';
 import { Md5Workers } from '../services/md5-workers.service';
-import { LIB_UTILS } from './settings';
+import { error } from '../settings';
 
 // ============================================================
 // This is used to manage an upload to a Cloud Storage Provider
@@ -126,7 +126,7 @@ export class Upload {
 
     public notifyError(err) {
 
-        LIB_UTILS.error('Manager', 'Error:', err);
+        error('Manager', 'Error:', err);
 
         if (this._retries < this.retries) {
             this._retries += 1;
@@ -153,7 +153,7 @@ export class Upload {
         } else {
             // inform the user that this is not implemented
             this.error = `provider, ${residence}, not found`;
-            LIB_UTILS.error('Manager', 'Error:', this.error);
+            error('Manager', 'Error:', this.error);
 
             // The upload cannot be performed
             this.uploading = false;

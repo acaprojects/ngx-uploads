@@ -1,13 +1,13 @@
 // Angular2 imports
 import { Injectable } from '@angular/core';
-import { Http } from '@angular/http';
+import { HttpClient } from '@angular/common/http';
 
 // Manager imports
 import { ICloudStorage } from '../classes/cloud-storage';
 import { CondoApi } from '../classes/condo-api';
 import { Md5Workers } from './md5-workers.service';
-import { LIB_UTILS } from '../classes/settings';
 import { Upload } from '../classes/upload';
+import { log, error } from '../settings';
 
 @Injectable({
     providedIn: "root"
@@ -16,7 +16,7 @@ export class UploadManager {
 
     public static addProvider(provider: ICloudStorage) {
         Upload.provider[provider.lookup] = provider;
-        LIB_UTILS.log('Manager', `Added provider '${provider.lookup}'`);
+        log('Manager', `Added provider '${provider.lookup}'`);
     }
 
     public uploads: Upload[] = [];
@@ -33,7 +33,7 @@ export class UploadManager {
     private _apiEndpoint: string;
     private _token: string = '';
 
-    constructor(private _http: Http,
+    constructor(private _http: HttpClient,
                 private _md5Workers: Md5Workers) {
     }
 
@@ -51,7 +51,7 @@ export class UploadManager {
 
     public upload(files: Blob[], params?: any) {
         if (!this._apiEndpoint) {
-            LIB_UTILS.error('Manager', 'No set endpoint.');
+            error('Manager', 'No set endpoint.');
             return;
         }
         let autostart = this.autoStart;
