@@ -41,7 +41,7 @@ export class CondoApi {
     public init() {
         const file = this._upload.file;
         let headers = new HttpHeaders();
-        const search = new HttpParams();
+        let search = new HttpParams();
         let req: any;
 
         headers = headers.append('Accept', 'application/json');
@@ -49,7 +49,6 @@ export class CondoApi {
         if (CondoApi._token) {
             headers = headers.append('Authorization', `Bearer ${CondoApi._token}`);
         }
-        console.log('File:', file);
         this._params.file_size = file.size;
         this._params.file_name = file.name;
 
@@ -66,7 +65,8 @@ export class CondoApi {
         }
 
         // Build the search params
-        this._setParams(search, this._params);
+        search = this._setParams(search, this._params);
+        console.log('File:', file, search);
 
         // Return the name of the storage provider (google, amazon, rackspace, etc)
         req = this._http
