@@ -1,7 +1,5 @@
-import { Component, ViewEncapsulation, ViewChild } from '@angular/core';
-import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
-
-import * as dayjs from 'dayjs';
+import { Component, ViewEncapsulation } from '@angular/core';
+import { UploadManager, Amazon } from 'projects/library/src/public-api';
 
 @Component({
     selector: 'app-root',
@@ -11,5 +9,13 @@ import * as dayjs from 'dayjs';
 })
 export class AppComponent {
     public model: { [name: string]: any } = {};
+
+    constructor(private _upload_manager: UploadManager) {
+        UploadManager.addProvider(Amazon);
+    }
+
+    public uploadFile(event) {
+        console.log('Event:', event);
+    }
 
 }

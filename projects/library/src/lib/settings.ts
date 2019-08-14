@@ -4,7 +4,7 @@ declare global {
     }
 }
 
-export const LIB_NAME = 'Checkbox';
+export const LIB_NAME = 'Uploads';
 
 /**
  * Formatted console messages for the library

@@ -49,7 +49,7 @@ export class CondoApi {
         if (CondoApi._token) {
             headers = headers.append('Authorization', `Bearer ${CondoApi._token}`);
         }
-
+        console.log('File:', file);
         this._params.file_size = file.size;
         this._params.file_name = file.name;
 
