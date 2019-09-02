@@ -1,7 +1,7 @@
 
 import { HttpClient } from '@angular/common/http';
 
-import { CloudStorage } from './cloud-storage';
+import { ICloudStorage, CloudStorage } from './cloud-storage';
 import { CondoApi } from './condo-api';
 import { Md5Workers } from '../services/md5-workers.service';
 import { error } from '../settings';
@@ -10,7 +10,7 @@ import { error } from '../settings';
 // This is used to manage an upload to a Cloud Storage Provider
 // ============================================================
 export class Upload {
-    public static provider: any = {};
+    public static provider: { [name: string]: ICloudStorage } = {};
 
     public static humanReadableByteCount(bytes: number, si: boolean = false) {
         const unit = si ? 1000.0 : 1024.0;
@@ -22,6 +22,8 @@ export class Upload {
 
         return (bytes / Math.pow(unit, exp)).toFixed(1) + ' ' + pre;
     }
+    /** URL to access the file once uploaded */
+    public access_url: string;
 
     public complete: boolean = false;
     public uploading: boolean = false;
@@ -45,6 +47,8 @@ export class Upload {
     private _provider: CloudStorage;
     private _retries: number = 0;
 
+
+
     constructor(
         private _http: HttpClient,
         private _apiEndpoint: string,
@@ -66,7 +70,6 @@ export class Upload {
     }
 
     public resume(parallel?: number) {
-
         if (!this.uploading && !this.complete && !this.cancelled) {
             this.uploading = true;
 

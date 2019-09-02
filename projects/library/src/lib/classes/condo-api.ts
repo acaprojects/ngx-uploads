@@ -66,7 +66,6 @@ export class CondoApi {
 
         // Build the search params
         search = this._setParams(search, this._params);
-        console.log('File:', file, search);
 
         // Return the name of the storage provider (google, amazon, rackspace, etc)
         req = this._http
