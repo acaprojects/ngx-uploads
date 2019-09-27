@@ -18,7 +18,7 @@ export class Md5Workers {
         this.setup();
     }
 
-    public setup(base: string = MD5_WORKER_BASE) {
+    public setup(base: string = MD5_WORKER_BASE, options?: WorkerOptions) {
         if (this._workers && this._workers.length > 0) {
             for (const worker of this._workers) {
                 worker.terminate();
@@ -26,7 +26,7 @@ export class Md5Workers {
         }
         this._workers = [];
         for (let i = 0; i < this._workerCount; i += 1) {
-            this._workers.push(new ParallelHasher(base));
+            this._workers.push(new ParallelHasher(base, options));
         }
     }
 

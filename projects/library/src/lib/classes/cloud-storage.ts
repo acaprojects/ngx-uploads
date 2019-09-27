@@ -50,7 +50,7 @@ export abstract class CloudStorage {
     constructor(protected _api: CondoApi,
                 protected _upload: Upload,
                 protected _md5Workers: Md5Workers,
-                private _completeCB: any) {
+                private _completeCB: (_: Upload) => void) {
         this._file = this._upload.file;
         this.size = this._file.size;
     }

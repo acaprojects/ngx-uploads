@@ -45,6 +45,9 @@ export class Amazon extends CloudStorage {
                 })
                 .subscribe((response) => {
                     this._strategy = response.type;
+                    if (response.signature) {
+                        this._upload.access_url = (response.signature.url || '').split('?')[0];
+                    }
                     if (response.type === 'direct_upload') {
                         this._direct(response, result);
                     } else {
