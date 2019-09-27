@@ -182,7 +182,7 @@ export class Azure extends CloudStorage {
                 this._api.sign('finish').subscribe((request) => {
                     request.data = this._generatePartManifest();
 
-                    this._api.signedRequest(request).request
+                    this._api.signedRequest(request as any).request
                         .then(this._completeUpload.bind(this), this._defaultError.bind(this));
                 }, this._defaultError.bind(this));
             } else if (!this._isFinishing) {

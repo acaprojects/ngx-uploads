@@ -68,11 +68,8 @@ export class UploadManager {
             upload.promise.then(completeCallback, completeCallback);
 
             // Only autostart if we under our simultaneous limit
-            if (autostart) {
-                autostart = this._checkAutostart();
-                if (autostart) {
-                    upload.resume(this.parallel);
-                }
+            if (autostart && this._checkAutostart()) {
+                upload.resume(this.parallel);
             }
         });
     }

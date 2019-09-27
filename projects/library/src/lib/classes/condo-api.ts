@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { map, share } from 'rxjs/operators';
 
 import { Upload } from './upload';
+import { HashMap, CondoResponse, CondoExtendedResponse } from '../types';
 
 // @dynamic
 export class CondoApi {
@@ -21,9 +22,9 @@ export class CondoApi {
 
     public uploadId: string;
 
-    private _params: any;
+    private _params: HashMap;
     private _uploadId: string;
-    private _currentRequests = new Set<any>();
+    private _currentRequests = new Set<Observable<any> | Promise<any>>();
     public static hexToBin(input: string) {
         let result = '';
 
@@ -41,8 +42,7 @@ export class CondoApi {
     public init() {
         const file = this._upload.file;
         let headers = new HttpHeaders();
-        let search = new HttpParams();
-        let req: any;
+        let params = new HttpParams();
 
         headers = headers.append('Accept', 'application/json');
         headers = headers.append('Content-Type', 'application/json');
@@ -55,7 +55,6 @@ export class CondoApi {
         if (file.dir_path && file.dir_path.length > 0) {
             this._params.file_path = file.dir_path;
         }
-
         if (this._upload && this._upload.params) {
             for (const p in this._upload.params) {
                 if (this._upload.params.hasOwnProperty(p)) {
@@ -63,31 +62,24 @@ export class CondoApi {
                 }
             }
         }
-
         // Build the search params
-        search = this._setParams(search, this._params);
-
+        params = this._setParams(params, this._params);
         // Return the name of the storage provider (google, amazon, rackspace, etc)
-        req = this._http
-            .get(`${this._apiEndpoint}/new`, {
-                params: search,
-                headers
-            })
+        const req = this._http
+            .get(`${this._apiEndpoint}/new`, { params, headers })
             .pipe(
-                map((res: any) => res.residence),
+                map((res: CondoResponse) => res.residence),
                 share()
             );
 
-        this._monitorRequest(this, req);
+        this._monitorRequest(req);
 
         return req;
     }
 
     // Create a new upload
-    public create(options: any = {}) {
+    public create(options: HashMap = {}) {
         let headers = new HttpHeaders();
-        let req: any;
-
         headers = headers.append('Accept', 'application/json');
         headers = headers.append('Content-Type', 'application/json');
 
@@ -105,19 +97,19 @@ export class CondoApi {
             this._params.parameters = options.parameters;
         }
 
-        req = this._http
+        const req = this._http
             .post(this._apiEndpoint, JSON.stringify(this._params), {
                 headers
             })
             .pipe(
-                map((res: any) => {
+                map((res: CondoExtendedResponse) => {
                     this._uploadId = res.upload_id;
                     return res;
                 }),
                 share()
             );
 
-        this._monitorRequest(this, req);
+        this._monitorRequest(req);
 
         return req;
     }
@@ -127,10 +119,10 @@ export class CondoApi {
     public nextChunk(partNum: number, partId: string, parts: number[], partData: any = null) {
         let search = new HttpParams();
         let headers = new HttpHeaders();
-        const body: any = {
+        const body: HashMap = {
             part_list: parts
         };
-        let req: any;
+        let req: Observable<HashMap>;
 
         if (partData) {
             body.part_data = partData;
@@ -152,18 +144,18 @@ export class CondoApi {
                 params: search,
                 headers
             })
-            .pipe(share());
+            .pipe(map(_ => _ || {}), share());
 
-        this._monitorRequest(this, req);
+        this._monitorRequest(req);
 
         return req;
     }
 
     // provides a query request for some providers if required
-    public sign(part_number: any, part_id: string = null) {
+    public sign(part_number: number | string, part_id: string = null) {
         let search = new HttpParams();
         let headers = new HttpHeaders();
-        let req: any;
+        let req: Observable<HashMap>;
 
         headers = headers.append('Accept', 'application/json');
         if (CondoApi._token) {
@@ -179,18 +171,17 @@ export class CondoApi {
             .get(`${this._apiEndpoint}/${encodeURIComponent(this._uploadId)}/edit`, {
                 params: search
             })
-            .pipe(share());
+            .pipe(map(_ => _ || {}), share());
 
-        this._monitorRequest(this, req);
+        this._monitorRequest(req);
 
         return req;
     }
 
     // Either updates the status of an upload (which parts are complete)
     // Or is used to indicate that an upload is complete
-    public update(params: any = {}) {
+    public update(params: HashMap = {}) {
         let headers = new HttpHeaders();
-        let req: any;
 
         headers = headers.append('Content-Type', 'application/json');
         headers = headers.append('Accept', 'application/json');
@@ -198,21 +189,21 @@ export class CondoApi {
             headers = headers.append('Authorization', `Bearer ${CondoApi._token}`);
         }
 
-        req = this._http
+        const req: Observable<HashMap> = this._http
             .put(`${this._apiEndpoint}/${encodeURIComponent(this._uploadId)}`, JSON.stringify(params), {
                 headers
             })
             .pipe(share());
 
-        this._monitorRequest(this, req);
+        this._monitorRequest(req);
 
         return req;
     }
 
     // Abort any existing requests
     public abort() {
-        this._currentRequests.forEach(req => {
-            req.dispose();
+        this._currentRequests.forEach((req: any) => {
+            if (req.dispose) { req.dispose(); }
         });
 
         this._currentRequests.clear();
@@ -233,12 +224,11 @@ export class CondoApi {
 
     // Executes the signed request against the cloud provider
     // Not very testable however it's the best we can achieve given the tools
-    public signedRequest(opts: any, monitor: boolean = false) {
-        const response: any = {};
-        let promise: any;
+    public signedRequest(opts: CondoExtendedResponse, monitor: boolean = false) {
+        const response: HashMap = {};
         let dispose: () => void;
 
-        promise = new Promise((resolve, reject) => {
+        const promise = new Promise<HashMap>((resolve, reject) => {
             let i: string;
             const xhr = new XMLHttpRequest();
             let observable: any;
@@ -303,21 +293,23 @@ export class CondoApi {
         });
 
         // Hook up the request monitoring
-        promise.dispose = dispose;
+        (promise as any).dispose = dispose;
         this._currentRequests.add(promise);
 
         response.request = promise;
         return response;
     }
 
-    private _monitorRequest(self: any, req: any) {
+    private _monitorRequest(req: Observable<any> | Promise<any>) {
         this._currentRequests.add(req);
-        req.subscribe(null, null, () => {
-            this._currentRequests.delete(req);
-        });
+        if (req instanceof Observable) {
+            req.subscribe(null, null, () => this._currentRequests.delete(req));
+        } else {
+            req.then(() => this._currentRequests.delete(req));
+        }
     }
 
-    private _setParams(search: HttpParams, params: any): HttpParams {
+    private _setParams(search: HttpParams, params: HashMap): HttpParams {
         for (const key in params) {
             if (params.hasOwnProperty(key)) {
                 search = search.set(key, encodeURIComponent(params[key]));

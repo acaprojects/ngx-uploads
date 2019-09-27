@@ -63,6 +63,7 @@ export class Amazon extends CloudStorage {
 
     // Calculates the MD5 of the part of the file we are uploading
     private _processPart(part: number) {
+        console.log('Process part', part);
         return this._hashData(part.toString(), () => {
             let data: any;
             let endbyte: number;
@@ -78,6 +79,7 @@ export class Amazon extends CloudStorage {
                 data = this._file;
             }
 
+            console.log('Processed', part);
             return data;
         }, (data) => {
             // We hash in here as not all cloud providers may use MD5
@@ -85,6 +87,7 @@ export class Amazon extends CloudStorage {
 
             // Hash the part and return the result
             return hasher.hash(data).then((md5: string) => {
+                console.log('Finished', part);
                 return { md5, part };
             });
         });
@@ -188,7 +191,7 @@ export class Amazon extends CloudStorage {
                 this._api.sign('finish').subscribe((request) => {
                     request.data = this._generatePartManifest();
 
-                    this._api.signedRequest(request).request
+                    this._api.signedRequest(request as any).request
                         .then(this._completeUpload.bind(this), this._defaultError.bind(this));
                 }, this._defaultError.bind(this));
             } else if (!this._isFinishing) {

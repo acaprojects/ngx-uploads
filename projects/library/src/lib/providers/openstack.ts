@@ -206,7 +206,7 @@ export class OpenStack extends CloudStorage {
                     // So we need to check the response
                     if (request.signature) {
                         request.data = this._generatePartManifest();
-                        this._api.signedRequest(request).request
+                        this._api.signedRequest(request as any).request
                             .then(this._completeUpload.bind(this), this._defaultError.bind(this));
                     } else {
                         this._completeUpload();
