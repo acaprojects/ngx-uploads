@@ -128,7 +128,7 @@ export class OpenStack extends CloudStorage {
                     resumable_id: 'n/a',
                     file_id: firstChunk.md5,
                     part: 1,
-                }).subscribe((data) => {
+                }).subscribe((data: any) => {
                     // We are provided with the first request
                     this._nextPartNumber();
                     this._memoization[1].path = data.path;

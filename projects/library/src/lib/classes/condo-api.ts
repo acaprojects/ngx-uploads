@@ -188,12 +188,19 @@ export class CondoApi {
         if (CondoApi._token) {
             headers = headers.append('Authorization', `Bearer ${CondoApi._token}`);
         }
-
-        const req: Observable<HashMap> = this._http
+        const req: Observable<any> = this._http
             .put(`${this._apiEndpoint}/${encodeURIComponent(this._uploadId)}`, JSON.stringify(params), {
-                headers
+                headers,
+                responseType: 'text'
             })
-            .pipe(share());
+            .pipe(map(i => {
+                console.log('Updated:', i);
+                try {
+                    return i ? JSON.parse(i) : i
+                } catch (e) {
+                    return i
+                }
+            }), share());
 
         this._monitorRequest(req);
 
