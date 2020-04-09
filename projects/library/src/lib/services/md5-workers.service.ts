@@ -14,9 +14,7 @@ export class Md5Workers {
     private _workerCount: number = 3;
     private _next: number = -1;
 
-    constructor() {
-        this.setup();
-    }
+    constructor() {}
 
     public setup(base: string = MD5_WORKER_BASE, options?: WorkerOptions) {
         if (this._workers && this._workers.length > 0) {
