@@ -88,7 +88,7 @@ export class Upload {
                             this._provider.start();
                         }
                     },
-                    (err) => this.notifyError(err),
+                    (err) => this.notifyError(err.message || err),
                 );
             } else {
                 this._provider.start();
@@ -98,8 +98,10 @@ export class Upload {
 
     public pause() {
         if (this.uploading) {
-            this._provider.pause();
             this.uploading = false;
+            if (this._provider) {
+                this._provider.pause();
+            }
         }
     }
 
@@ -149,7 +151,6 @@ export class Upload {
 
     private _initialise(residence: string) {
         const Provider = Upload.provider[residence];
-
         if (Provider) {
             this._provider = new Provider(this._api, this, this._md5Workers, this._resolve);
             this._initialised = true;

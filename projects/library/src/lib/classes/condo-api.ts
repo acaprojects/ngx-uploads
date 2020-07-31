@@ -194,7 +194,6 @@ export class CondoApi {
                 responseType: 'text'
             })
             .pipe(map(i => {
-                console.log('Updated:', i);
                 try {
                     return i ? JSON.parse(i) : i
                 } catch (e) {
