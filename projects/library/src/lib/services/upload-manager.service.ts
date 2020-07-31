@@ -49,16 +49,18 @@ export class UploadManager {
         this._md5Workers.setup(url);
     }
 
-    public upload(files: Blob[], params?: any) {
+    public upload(files: Blob[], params?: any): Upload[] {
         if (!this._apiEndpoint) {
             error('Manager', 'No set endpoint.');
             return;
         }
         let autostart = this.autoStart;
         const completeCallback = this._uploadComplete.bind(this);
+        const uploads: Upload[] = [];
 
         files.forEach((file) => {
             const upload: Upload = new Upload(this._http, this._apiEndpoint, this._md5Workers, file, this.retries, this.parallel, params);
+            uploads.push(upload);
             this.uploads.push(upload);
 
             // Apply metadata
@@ -72,6 +74,7 @@ export class UploadManager {
                 upload.resume(this.parallel);
             }
         });
+        return uploads;
     }
 
     public pauseAll() {
