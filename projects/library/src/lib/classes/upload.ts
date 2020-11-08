@@ -31,6 +31,7 @@ export class Upload {
     public totalBytes: number;
     public progress: number = 0;
     public filename: string = '';
+    public mime_type: string = 'binary/octet-stream';
     public metadata: any;    // Data provided at the start and completion of an upload
 
     // Provide feedback as to why an upload failed
@@ -46,8 +47,6 @@ export class Upload {
     private _api: CondoApi;
     private _provider: CloudStorage;
     private _retries: number = 0;
-
-
 
     constructor(
         private _http: HttpClient,
@@ -66,6 +65,9 @@ export class Upload {
 
         if (this.file.name) {
             this.filename = this.file.name;
+        }
+        if (this.file.type) {
+            this.mime_type = this.file.type;
         }
     }
 

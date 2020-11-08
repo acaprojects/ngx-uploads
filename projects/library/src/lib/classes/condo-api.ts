@@ -40,7 +40,7 @@ export class CondoApi {
     }
 
     public init() {
-        const file = this._upload.file;
+        const file: any = this._upload.file;
         let headers = new HttpHeaders();
         let params = new HttpParams();
 
@@ -283,9 +283,12 @@ export class CondoApi {
 
             // Set the headers
             for (i in opts.signature.headers) {
-                if (opts.signature.headers.hasOwnProperty(i)) {
+                if (opts.signature.headers.hasOwnProperty(i) && (i.toLowerCase() !== 'content-type' || !this._upload.mime_type)) {
                     xhr.setRequestHeader(i, opts.signature.headers[i]);
                 }
+            }
+            if (this._upload.mime_type) {
+                xhr.setRequestHeader('Content-Type', this._upload.mime_type);
             }
 
             // Allow the request to be cancelled (quack!)
