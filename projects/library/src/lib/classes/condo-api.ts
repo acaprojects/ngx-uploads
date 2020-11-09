@@ -90,6 +90,9 @@ export class CondoApi {
         if (options.file_id) {
             this._params.file_id = options.file_id;
         }
+        if (this._upload.mime_type) {
+            this._params.file_mime = this._upload.mime_type;
+        }
 
         // We may be requesting the next set of parts
         // TODO:: review this
@@ -136,7 +139,8 @@ export class CondoApi {
 
         search = this._setParams(search, {
             part: partNum,
-            file_id: partId
+            file_id: partId,
+            file_mime: this._upload.mime_type
         });
 
         req = this._http
